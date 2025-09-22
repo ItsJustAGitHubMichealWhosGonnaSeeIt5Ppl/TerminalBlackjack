@@ -28,10 +28,12 @@ namespace BlackjackGame
             
 
             TerminalDisplay gameDisplay = new TerminalDisplay(terminal_width, terminal_height, 3);
-
+            bool test = false;
+            if (test)
+            {
             // TEST
-            (double x, double y) velocity2 = TerminalAnimation.VectorPls(24); // set the start angle here
-            var coordlist = TerminalAnimation.Reflect(1, 1, gameDisplay.size_x-4, gameDisplay.size_y-4, velocity2.x, velocity2.y, 20); // Remove 4 from the border so the ball stays on screen
+                (double x, double y) velocity2 = TerminalMovement.UnitVector(89); // set the start angle here
+            var coordlist = TerminalMovement.Reflect(1, 1, gameDisplay.size_x-4, gameDisplay.size_y-4, velocity2.x, velocity2.y, 20); // Remove 4 from the border so the ball stays on screen
             char[,] x_char = new char[,] { { 'O','O' }, { 'O','O' } };
             char[,] ball = new char[,] { { ' ', 'O','O', ' ' }, { 'O','O','O','O' }, { 'O','O','O','O' }, { ' ', 'O','O', ' ' } };
             int trail = 0; // flip back and forth between two layers so that there is a trail
@@ -40,18 +42,17 @@ namespace BlackjackGame
                 gameDisplay.Clear(trail == 0 ? 1 : 0); // Clear the inactive layer
                 gameDisplay.Update(Convert.ToInt32(coord.x), Convert.ToInt32(coord.y), ball, trail);
                 gameDisplay.Draw();
-                Thread.Sleep(40);
+                Thread.Sleep(20);
                 trail = trail == 0 ? 1 : 0; // flip the layer
 
             }
-            //TerminalAnimation.VectorPls(181);
 
-                // Trying to make a circle
-                double scale = 35;// This is the radius of the circle
+            // Trying to make a circle
+            double scale = 35;// This is the radius of the circle
             int origin = 50; // This is the center of the circle  // We'ere just gonna put it dead centre
             for (int i = 0; i <= -1; i++) // Debug the circle
             {
-                (double x, double y) velocity = TerminalAnimation.VectorPls(i);
+                (double x, double y) velocity = TerminalMovement.UnitVector(i);
                 Console.WriteLine($"{i}: {velocity.x}, {velocity.y}");
                 Console.WriteLine($"{i}: X={Convert.ToInt32(scale * velocity.x + origin)}, Y={Convert.ToInt32(scale * velocity.y + origin)}");
                 Thread.Sleep(10);
@@ -59,7 +60,7 @@ namespace BlackjackGame
 
             for (int i = 0; i <= 360; i++) // Make a circle
             {
-                (double x, double y) velocity = TerminalAnimation.VectorPls(i); // I probably don't need to declare the datatype here but whatever
+                (double x, double y) velocity = TerminalMovement.UnitVector(i); // I probably don't need to declare the datatype here but whatever
                 char[,] coords = AsciiArt.StringToArray($"{Convert.ToInt32(scale * velocity.x + (gameDisplay.size_x / 2))}, {Convert.ToInt32(scale * velocity.y + (gameDisplay.size_y / 2))}");
                 gameDisplay.Update((gameDisplay.size_x / 2)-2, gameDisplay.size_y / 2, coords, 1); // Disply the coords of the circle 
 
@@ -71,8 +72,8 @@ namespace BlackjackGame
             }
 
             Console.ReadKey(true);
-
             // END TEST
+            }
 
             gameDisplay.Clear();
             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.BlackJackLogo.GetLength(0) / 2), 0, AsciiArt.BlackJackLogo, 0); // Draw this as the background in the center ish
@@ -340,11 +341,15 @@ namespace BlackjackGame
             // For now this will be on layer 1 I guess
             gameDisplay.Clear(1);
             gameDisplay.Clear(2);
+            (int x, int y) deckPos = (gameDisplay.size_x - 5, 10); // This is where the deck is
 
             int center_x = gameDisplay.size_x / 2;
             int delay = 30;
             // Player card
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(playerHand[0]), deckPos.x, deckPos.y, gameDisplay.size_y - 10, gameDisplay.size_x / 2, 1, 10, 1);
             int j = gameDisplay.size_x;
+
+
             for (int i = 0; i < center_x / 2; i++)
             {
                 gameDisplay.Clear(1);
