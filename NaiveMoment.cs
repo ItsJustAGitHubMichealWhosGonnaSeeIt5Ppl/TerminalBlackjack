@@ -20,26 +20,22 @@ public static class TerminalMovement
     /// <param name="layer"></param>
     public static void BasicAnimation(TerminalDisplay display, char[,] sprite, int start_x, int start_y, int end_x, int end_y, int movement_amount, int speed = 50, int layer = 0)
     {
-        var linearRegression = LinearRegression(start_x, start_y, end_x, end_y);
+        var vectors = UnitVector(start_x, start_y, end_x, end_y);
+        //var linearRegression = LinearRegression(start_x, start_y, end_x, end_y);
         // We are going to end up with half positions, so we will just round to the nearest full number in that situation
-        double slope; // How many pixels we will increase in a direction before increasing 1 in the other
-        double intercept; // This is B
-        slope = (double)(start_y - end_y) / (start_x - end_x); // To get our Y coordinate, we take this number * the x coordinate - (I DONT KNOW)
-        intercept = ((double)(start_y + end_y) / 2) - slope * ((double)(start_x + end_x) / 2);  // This is what Y would be if X = 0
-        
-        var coords = new List<(int x, int y)>();
-        for (int i = start_y; i < end_y; i++)
-        {
-            coords.Add((i, Convert.ToInt16(Math.Round(linearRegression.y_slope * i + linearRegression.y_intercept))));
-        }
-        
+        double xd = start_x;
+        double yd = start_y;
 
-        foreach ((int x, int y) coord in coords)
+
+        while (Convert.ToInt16(xd) != end_x) // Jank ass solution, lets see what happens
         {
             display.Clear(layer);
-            display.Update(coord.x, coord.y, sprite, layer);
+            display.Update(Convert.ToInt16(xd), Convert.ToInt16(yd), sprite, layer);
             display.Draw();
             Thread.Sleep(speed);
+            xd += vectors.x;
+            yd += vectors.y;
+
         }
 
     }
@@ -82,8 +78,12 @@ public static class TerminalMovement
 
         return (cos, sin);
     }
-    public static void UnitVector(int x_start, int y_start, int x_stop, int y_stop) // Getting the position using start and end coords // TODO MAKE THIS WORK
+    public static (double x, double y) UnitVector(int x_start, int y_start, int x_stop, int y_stop) // Getting the position using start and end coords // TODO MAKE THIS WORK
     {
+        int x_rel = x_stop - x_start; // The amount of movment where start is 0
+        int y_rel = y_stop - y_start; // The amount of movment where start is 0
+        double magnitude = Math.Sqrt(Math.Pow(x_rel, 2) + Math.Pow(y_rel, 2)); // Magnitude
+        return (x_rel / magnitude, y_rel / magnitude); // Single unit
     }
 
     public static (double x, double y) VectorPls(int direction) // NO LONGER USED
@@ -95,7 +95,7 @@ public static class TerminalMovement
         CONVERTING VECTOR (any vector) TO MAGNITUDE
         Take vector, we get magnitude, then we divide vector by the magnitude of itself (based)
         To get the magnitude, we need to find the "norm" 
-        Getting magnitude:  Take x(sqrd) + v(sqrd) and then get the square route of that. That is magnitude
+        Getting magnitude:  Take x(sqrd) + y(sqrd) and then get the square route of that. That is magnitude
 
         Circle outside = 2*radius*pi
         each 45 degrees is 1/4 of pi

@@ -242,6 +242,8 @@ namespace BlackjackGame
                         else // dealer needs to draw
                         {
                             dealerHand.Add(myDeck.deck[cardCount--]);
+                            Animations.AddCard(gameDisplay, dealerHand);
+
                         }
                     }
                 }
@@ -341,53 +343,18 @@ namespace BlackjackGame
             // For now this will be on layer 1 I guess
             gameDisplay.Clear(1);
             gameDisplay.Clear(2);
-            (int x, int y) deckPos = (gameDisplay.size_x - 5, 10); // This is where the deck is
+            (int x, int y) deckPos = (gameDisplay.size_x - 15, 15); // This is where the deck is
 
             int center_x = gameDisplay.size_x / 2;
-            int delay = 30;
+            int delay = 20;
             // Player card
-            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(playerHand[0]), deckPos.x, deckPos.y, gameDisplay.size_y - 10, gameDisplay.size_x / 2, 1, 10, 1);
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(playerHand[0]), deckPos.x, deckPos.y, gameDisplay.size_x / 2,  gameDisplay.size_y - 6, 1, delay, 1);
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.CardFaceDown, deckPos.x, deckPos.y, gameDisplay.size_x / 2, 10, 1, delay, 2);
             int j = gameDisplay.size_x;
-
-
-            for (int i = 0; i < center_x / 2; i++)
-            {
-                gameDisplay.Clear(1);
-                gameDisplay.Update(j -= 2, gameDisplay.size_y - 10, AsciiArt.Card(playerHand[0]), 1);
-                gameDisplay.Draw();
-                Thread.Sleep(delay); // Sleep .5 seconds
-            }
-            // Dealer card
-            j = gameDisplay.size_x;
-            for (int i = 0; i < center_x / 2; i++)
-            {
-                gameDisplay.Clear(2);
-                gameDisplay.Update(j -= 2, 10, AsciiArt.CardFaceDown, 2);
-                gameDisplay.Draw();
-                Thread.Sleep(delay); // Sleep .5 seconds
-            }
             gameDisplay.MergeLayer(2, 1); // Merge layer 2 to layer 1
-
-            j = gameDisplay.size_x;
-            // Player card
-            for (int i = 0; i < center_x / 2 - 5; i++)
-            {
-                gameDisplay.Clear(2);
-                gameDisplay.Update(j -= 2, gameDisplay.size_y - 10, AsciiArt.Card(playerHand[1]), 2);
-                gameDisplay.Draw();
-                Thread.Sleep(delay); // Sleep .5 seconds
-            }
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(playerHand[1]), deckPos.x, deckPos.y, gameDisplay.size_x / 2 + 10,  gameDisplay.size_y - 6, 1, delay, 2);
             gameDisplay.MergeLayer(2, 1); // Merge layer 2 to layer 1
-
-            // Dealer card
-            j = gameDisplay.size_x;
-            for (int i = 0; i < center_x / 2 - 5; i++)
-            {
-                gameDisplay.Clear(2);
-                gameDisplay.Update(j -= 2, 10, AsciiArt.Card(dealerHand[1]), 2);
-                gameDisplay.Draw();
-                Thread.Sleep(delay); // Sleep .5 seconds
-            }
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(dealerHand[1]), deckPos.x, deckPos.y, gameDisplay.size_x / 2 + 10, 10 , 1, delay, 2);
             gameDisplay.MergeLayer(2, 1); // Merge layer 2 to layer 1
         }
         public static void AddCard(TerminalDisplay gameDisplay, List<Card> hand)
