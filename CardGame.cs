@@ -136,23 +136,13 @@ namespace BlackjackGame
             Deck myDeck = new Deck();
 
             bool play = true;
+            Participant player = new Participant(gameDisplay.size_x / 2 - 20, gameDisplay.size_y - 5);
+            Participant dealer = new Participant(gameDisplay.size_x / 2 - 20, 10);
             while (play)
             {
                 myDeck.Shuffle(); // Shuffle the deck
                 int cardCount = 51;
                 bool roundActive = true; // each round will consist of as many hands as the deck allows
-                // TODO make a participant class/ that can store all of these
-                List<Card> playerHand = new List<Card>();
-                int playerHandValue = 0;
-                //bool playerHasAce = false; I don't want to track this here anymore, seems dumb
-                bool playerBust = false;
-                bool playerHasBlackJack = false;
-
-                List<Card> dealerHand = new List<Card>();
-                int dealerHandValue = 0;
-                //bool dealerHasAce = false;
-                bool dealerBust = false;
-                bool dealerHasBlackJack = false;
 
                 while (roundActive)
                 {
@@ -160,42 +150,42 @@ namespace BlackjackGame
                     {
                         roundActive = false; // End of round, cards need to be reshuffled
                     }
-                    bool handActive = true; // start of a new round    
-                    playerHand.Add(myDeck.deck[cardCount--]);
-                    dealerHand.Add(myDeck.deck[cardCount--]);
-                    playerHand.Add(myDeck.deck[cardCount--]);
-                    dealerHand.Add(myDeck.deck[cardCount--]);
-                    Animations.StartHand(gameDisplay, playerHand, dealerHand);
+                    bool handActive = true; // start of a new round
+                    player.addCard(myDeck.deck[cardCount--]);
+                    dealer.addCard(myDeck.deck[cardCount--]);
+                    player.addCard(myDeck.deck[cardCount--]);
+                    dealer.addCard(myDeck.deck[cardCount--]);
+                    Animations.StartHand(gameDisplay, player.hand, dealer.hand);
                     // We'll use this loop to display a play again option or something
                     bool stand = false;
                     while (handActive)
                     {
-                        (playerHandValue, playerBust, playerHasBlackJack) = checkHand(playerHand);
-                        (dealerHandValue, dealerBust, dealerHasBlackJack) = checkHand(dealerHand);
+                        player.checkHand();
+                        dealer.checkHand();
                         // display will be here
                         // Checking for wins
-                        if (playerHasBlackJack && dealerHasBlackJack)
+                        if (player.blackjack && dealer.blackjack)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.DrawText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.DrawText, 2);
                             Console.ReadKey();
                             break;
                             // push
                         }
-                        else if (playerHasBlackJack || dealerBust)
+                        else if (player.blackjack || dealer.bust)
                         {
                             Animations.Win(gameDisplay);
                             break;
                             // Player wins
                         }
 
-                        else if (dealerHasBlackJack || playerBust)
+                        else if (dealer.blackjack || player.bust)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.LoseText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.LoseText, 2);
                             Console.ReadKey();
                             break;
                             // dealer wins
                         }
-                        else if (stand && playerHandValue == dealerHandValue && dealerHandValue >= 17)
+                        else if (stand && player.handValue == dealer.handValue && dealer.handValue >= 17)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.DrawText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.DrawText, 2);
                             Console.ReadKey();
@@ -203,13 +193,13 @@ namespace BlackjackGame
                             // push
                         }
 
-                        else if (dealerHandValue >= 17 && playerHandValue > dealerHandValue)
+                        else if (dealer.handValue >= 17 && player.handValue > dealer.handValue)
                         {
                             Animations.Win(gameDisplay);
                             break;
                             // player wins
                         }
-                        else if (dealerHandValue >= 17 && dealerHandValue > playerHandValue)
+                        else if (dealer.handValue >= 17 && dealer.handValue > player.handValue)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.LoseText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.LoseText, 2);
                             Console.ReadKey();
@@ -221,8 +211,8 @@ namespace BlackjackGame
                             switch (Console.ReadKey(true).Key)
                             {
                                 case ConsoleKey.H: // Hit
-                                    playerHand.Add(myDeck.deck[cardCount--]);
-                                    Animations.AddCard(gameDisplay, playerHand);
+                                    player.addCard(myDeck.deck[cardCount--]);
+                                    Animations.AddCard(gameDisplay, player.hand);
                                     break;
 
                                 case ConsoleKey.S: // Stand
@@ -241,8 +231,8 @@ namespace BlackjackGame
                         }
                         else // dealer needs to draw
                         {
-                            dealerHand.Add(myDeck.deck[cardCount--]);
-                            Animations.AddCard(gameDisplay, dealerHand);
+                            dealer.addCard(myDeck.deck[cardCount--]);
+                            Animations.AddCard(gameDisplay, dealer.hand);
 
                         }
                     }
@@ -250,12 +240,27 @@ namespace BlackjackGame
                 // TODO display that this round has ended
             }
         }
-        static (int handValue, bool bust, bool blackjack) checkHand(List<Card> hand)
+    }
+
+
+    public class Participant // Will store things like whether the player is a dealer, what cards are in their hand, etc
+    {
+        public List<Card> hand { get; private set; }
+        public int handValue { get; private set; }
+        public bool bust { get; private set; }
+        public bool blackjack { get; private set; }
+        public (int x, int y) handPos;
+        public Participant(int x, int y)
         {
-            int handValue = 0;
+            this.handPos = (x, y);
+            this.hand = new List<Card>();
+        }
+        public void checkHand()
+        {
+            this.handValue = 0;
+            this.bust = false;
+            this.blackjack = false;
             bool ace = false;
-            bool bust = false;
-            bool blackjack = false;
 
             foreach (Card card in hand) // check all the cards
             {
@@ -285,19 +290,16 @@ namespace BlackjackGame
             {
                 blackjack = true;
             }
-
-            return (handValue, bust, blackjack);
         }
-        static void Play(Deck deck) // Play the game
+        public void addCard(Card card) // Add a card to hand
         {
-
+            hand.Add(card);
         }
-    }
-
-
-    public class Participant // Will store things like whether the player is a dealer, what cards are in their hand, etc
-    {
-
+        public void resetHand() // Reset hand for a new round
+        {
+            handValue = 0;
+            hand.Clear();
+        }
     }
     public class Deck
     {
