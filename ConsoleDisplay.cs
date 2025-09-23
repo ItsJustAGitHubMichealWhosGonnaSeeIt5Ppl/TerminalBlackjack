@@ -15,6 +15,17 @@ public class TerminalDisplay //
     public int size_y { get; }
     int total_layers;
     char[,,] display;
+    public enum Anchor {
+        top_left,
+        top_center,
+        top_right,
+        left,
+        center,
+        right,
+        bottom_left,
+        bottom_center,
+        bottom_right,
+    };
     /// <summary>
     /// Create a display. By default, the display will only have a single layer. Layers will be drawn lowest to highest
     /// </summary>
@@ -26,7 +37,6 @@ public class TerminalDisplay //
         this.display = new char[x, y, layers];
         Console.Clear(); // Clear the terminal
         Clear();
-
     }
 
     public void Clear(int layer = 0) // Clear the entire display (set to blank) //TODO allow a base layer (background) to be set
@@ -54,8 +64,42 @@ public class TerminalDisplay //
     }
 
 
-    public void Update(int x, int y, char[,] arrayToDisplay, int layer = 0) // try to draw image onto display. Whitespace WILL be included
+    public void Update(int x, int y, char[,] arrayToDisplay, int layer = 0, Anchor anchor=Anchor.top_left) // try to draw image onto display. Whitespace WILL be included
     {
+        switch (anchor)
+        {
+            case Anchor.top_left: // change nothing
+                break;
+            case Anchor.top_center: // offset X
+                x -= (arrayToDisplay.GetLength(0)-1) / 2;
+                break;
+            case Anchor.top_right:
+                x = arrayToDisplay.GetLength(0) - 1;
+                break;
+            case Anchor.left:
+                y -= (arrayToDisplay.GetLength(1) - 1) / 2;
+                break;
+            case Anchor.center:
+                x -= (arrayToDisplay.GetLength(0)-1) / 2;
+                y -= (arrayToDisplay.GetLength(1) - 1) / 2;
+                break;
+            case Anchor.right:
+                x = arrayToDisplay.GetLength(0) - 1;
+                y -= (arrayToDisplay.GetLength(1) - 1) / 2;
+                break;
+            case Anchor.bottom_left:
+                y = arrayToDisplay.GetLength(1) - 1;
+                break;
+            case Anchor.bottom_center:
+                x -= (arrayToDisplay.GetLength(0)-1) / 2;
+                y = arrayToDisplay.GetLength(1) - 1;
+                break;
+            case Anchor.bottom_right:
+                x = arrayToDisplay.GetLength(0) - 1;
+                y = arrayToDisplay.GetLength(1) - 1;
+                break;
+        }
+
         for (int ay = 0; ay < arrayToDisplay.GetLength(1); ay++) // must use getlength instead of length
         {
 
@@ -90,12 +134,12 @@ public class TerminalDisplay //
         char[,] selectedChars = new char[x2 - x1, y2 - y1]; // This will store the selected section
 
         // Grab the section
-        for (int i = x1; i <= x2; i++)
+        for (int i = y1; i <= y2; i++)
         {
-            for (int j = y1; j <= y2; j++)
+            for (int j = x1; j <= x2; j++)
             {
                 {
-                    selectedChars[j - y1, i - x1] = display[j, i, layer];
+                    selectedChars[j - x1, i - y1] = display[j, i, layer];
                 }
             }
         }
