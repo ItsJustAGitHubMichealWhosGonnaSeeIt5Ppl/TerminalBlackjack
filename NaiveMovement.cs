@@ -1,8 +1,11 @@
 /* MOVEMENT AND ANIMATION TOOL
-Basic animations like moving an object around (todos below)
+Basic movement of objects in the terminal using coordinates
 - TODO allow object to move from one coordinate to another
 - TODO allow object speed to be set
 - TODO allow object speed to increase and decrease
+- TODO some sort of gravity
+
+
 */
 public static class TerminalMovement
 {
@@ -18,7 +21,7 @@ public static class TerminalMovement
     /// <param name="movement_amount">How many pixels to move by in each frame</param>
     /// <param name="speed">milliseconds to delay between frames (defaults to 50)</param>
     /// <param name="layer"></param>
-    public static void BasicAnimation(TerminalDisplay display, char[,] sprite, int start_x, int start_y, int end_x, int end_y, int movement_amount, int speed = 50, int layer = 0)
+    public static void BasicAnimation(TerminalDisplay display, char[,] sprite, int start_x, int start_y, int end_x, int end_y, int move_amount=1, int speed = 50, int layer = 0)
     {
         var vectors = UnitVector(start_x, start_y, end_x, end_y);
         //var linearRegression = LinearRegression(start_x, start_y, end_x, end_y);
@@ -33,10 +36,13 @@ public static class TerminalMovement
             display.Update(Convert.ToInt16(xd), Convert.ToInt16(yd), sprite, layer);
             display.Draw();
             Thread.Sleep(speed);
-            xd += vectors.x;
-            yd += vectors.y;
+            xd += vectors.x*move_amount;
+            yd += vectors.y*move_amount;
 
         }
+        display.Clear(layer);
+        display.Update(end_x, end_y, sprite, layer);
+        display.Draw();
 
     }
     public static (double x_slope, double x_intercept, double y_slope, double y_intercept) LinearRegression(int start_x, int start_y, int end_x, int end_y)
@@ -265,7 +271,6 @@ public static class TerminalMovement
             {
                 y = direction == '+' ? y + 1 : y - 1;
                 x = Convert.ToInt16(Math.Round(slope_x * y + bounce_x + (bounce_y / slope_y)));
-                x = x;
             }
 
         }
