@@ -23,11 +23,12 @@ namespace BlackjackGame
         static void Main(string[] args)
         {
             // Get console size
-            int terminal_width = Console.WindowWidth;
-            int terminal_height = Console.WindowHeight;
-            
+            int terminal_width = Console.WindowWidth-1;
+            int terminal_height = Console.WindowHeight-1;
 
             TerminalDisplay gameDisplay = new TerminalDisplay(terminal_width, terminal_height, 3);
+            var test2 = AsciiArt.Number(21);
+
             bool test = false;
             if (test)
             {
@@ -44,7 +45,6 @@ namespace BlackjackGame
                 gameDisplay.Draw();
                 Thread.Sleep(20);
                 trail = trail == 0 ? 1 : 0; // flip the layer
-
             }
 
             // Trying to make a circle
@@ -76,10 +76,10 @@ namespace BlackjackGame
             }
 
             gameDisplay.Clear();
-            gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.BlackJackLogo.GetLength(0) / 2), 0, AsciiArt.BlackJackLogo, 0); // Draw this as the background in the center ish
-            gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.PlayButton.GetLength(0) / 2), 10, AsciiArt.PlayButton, 1);
-            gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.PlayButtonSelected.GetLength(0) / 2), 10, AsciiArt.PlayButtonSelected, 2); // Set layer 2 play button to selected
-            gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.QuitButton.GetLength(0) / 2), 22, AsciiArt.QuitButton, 1);
+            gameDisplay.Update(gameDisplay.size_x / 2, 3, AsciiArt.BlackJackLogo, 0, TerminalDisplay.Anchor.top_center); // Draw this as the background in the center ish
+            gameDisplay.Update(gameDisplay.size_x / 2, 13, AsciiArt.PlayButton, 1, TerminalDisplay.Anchor.top_center);
+            gameDisplay.Update(gameDisplay.size_x / 2, 13, AsciiArt.PlayButtonSelected, 2, TerminalDisplay.Anchor.top_center); // Set layer 2 play button to selected
+            gameDisplay.Update(gameDisplay.size_x / 2, 25, AsciiArt.QuitButton, 1, TerminalDisplay.Anchor.top_center);
             gameDisplay.Draw();
 
             int button = 1; // Track whether the play button is being selected or not
@@ -119,14 +119,14 @@ namespace BlackjackGame
                     }
                     else
                     {
-                        gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.PlayButtonSelected.GetLength(0) / 2), 10, AsciiArt.PlayButtonSelected, 2);
+                        gameDisplay.Update(gameDisplay.size_x / 2, 13, AsciiArt.PlayButtonSelected, 2, TerminalDisplay.Anchor.top_center);
                     }
                     gameDisplay.Draw();
 
                 }
                 else if (button == 0) // This means quit
                 {
-                    gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.QuitButton.GetLength(0) / 2), 22, AsciiArt.QuitButtonSelected, 2);
+                    gameDisplay.Update(gameDisplay.size_x / 2 +1, 25, AsciiArt.QuitButtonSelected, 2, TerminalDisplay.Anchor.top_center);
                     gameDisplay.Draw();
                 }
             }
@@ -136,8 +136,8 @@ namespace BlackjackGame
             Deck myDeck = new Deck();
 
             bool play = true;
-            Participant player = new Participant(gameDisplay.size_x / 2 - 20, gameDisplay.size_y - 5);
-            Participant dealer = new Participant(gameDisplay.size_x / 2 - 20, 10);
+            Participant player = new Participant(gameDisplay.size_x / 2 - 24, gameDisplay.size_y - 10);
+            Participant dealer = new Participant(gameDisplay.size_x / 2 - 24, 15);
             while (play)
             {
                 myDeck.Shuffle(); // Shuffle the deck
@@ -151,23 +151,32 @@ namespace BlackjackGame
                         roundActive = false; // End of round, cards need to be reshuffled
                     }
                     bool handActive = true; // start of a new round
+                    // Reset hands
+                    gameDisplay.Update(gameDisplay.size_x - 15, 15, AsciiArt.CardFaceDown, 0); // This is the deck 
+                    player.resetHand();
+                    dealer.resetHand();
+                    
+
                     player.addCard(myDeck.deck[cardCount--]);
                     dealer.addCard(myDeck.deck[cardCount--]);
                     player.addCard(myDeck.deck[cardCount--]);
                     dealer.addCard(myDeck.deck[cardCount--]);
-                    Animations.StartHand(gameDisplay, player.hand, dealer.hand);
+                    Animations.StartHand(gameDisplay, player, dealer);
                     // We'll use this loop to display a play again option or something
                     bool stand = false;
                     while (handActive)
                     {
+                        //Update counts and display player current hand value
                         player.checkHand();
+                        gameDisplay.FillSection(' ', player.handPos.x2 / 2, player.handPos.y-10, player.handPos.x + 20 , player.handPos.y, 1);
+                        gameDisplay.Update(gameDisplay.size_x / 2, player.handPos.y -10, AsciiArt.Number(player.handValue), 1, TerminalDisplay.Anchor.center);
+                        gameDisplay.Draw(); 
                         dealer.checkHand();
                         // display will be here
                         // Checking for wins
                         if (player.blackjack && dealer.blackjack)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.DrawText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.DrawText, 2);
-                            Console.ReadKey();
                             break;
                             // push
                         }
@@ -181,28 +190,25 @@ namespace BlackjackGame
                         else if (dealer.blackjack || player.bust)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.LoseText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.LoseText, 2);
-                            Console.ReadKey();
                             break;
                             // dealer wins
                         }
                         else if (stand && player.handValue == dealer.handValue && dealer.handValue >= 17)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.DrawText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.DrawText, 2);
-                            Console.ReadKey();
                             break;
                             // push
                         }
 
-                        else if (dealer.handValue >= 17 && player.handValue > dealer.handValue)
+                        else if (stand && dealer.handValue >= 17 && player.handValue > dealer.handValue)
                         {
                             Animations.Win(gameDisplay);
                             break;
                             // player wins
                         }
-                        else if (dealer.handValue >= 17 && dealer.handValue > player.handValue)
+                        else if (stand && dealer.handValue >= 17 && dealer.handValue > player.handValue)
                         {
                             gameDisplay.Update((gameDisplay.size_x / 2) - (AsciiArt.LoseText.GetLength(0) / 2), gameDisplay.size_y / 2, AsciiArt.LoseText, 2);
-                            Console.ReadKey();
                             break;
                             // dealer wins
                         }
@@ -212,7 +218,7 @@ namespace BlackjackGame
                             {
                                 case ConsoleKey.H: // Hit
                                     player.addCard(myDeck.deck[cardCount--]);
-                                    Animations.AddCard(gameDisplay, player.hand);
+                                    Animations.AddCard(gameDisplay, player);
                                     break;
 
                                 case ConsoleKey.S: // Stand
@@ -231,11 +237,16 @@ namespace BlackjackGame
                         }
                         else // dealer needs to draw
                         {
+                            gameDisplay.FillSection(' ', dealer.handPos.x2 / 2, dealer.handPos.y, dealer.handPos.x2 / 2 + 8, dealer.handPos.y + 6, 1); // Clear the face down card
+                            gameDisplay.Update(dealer.handPos.x2 / 2, dealer.handPos.y, AsciiArt.Card(dealer.hand[0]), 1); // Display face down card
                             dealer.addCard(myDeck.deck[cardCount--]);
-                            Animations.AddCard(gameDisplay, dealer.hand);
-
+                            Animations.AddCard(gameDisplay, dealer);
                         }
                     }
+                    gameDisplay.FillSection(' ', dealer.handPos.x2 / 2, dealer.handPos.y, dealer.handPos.x2 / 2 + 8, dealer.handPos.y + 6, 1); // Clear the face down card
+                    gameDisplay.Update(dealer.handPos.x2 / 2, dealer.handPos.y, AsciiArt.Card(dealer.hand[0]), 1); // Display face down card
+                    gameDisplay.Draw();
+                    Console.ReadKey(); // Wait for player to hit a key to start the next round
                 }
                 // TODO display that this round has ended
             }
@@ -249,10 +260,10 @@ namespace BlackjackGame
         public int handValue { get; private set; }
         public bool bust { get; private set; }
         public bool blackjack { get; private set; }
-        public (int x, int y) handPos;
+        public (int x, int y, int x2, int y2) handPos; // Top left corner, Hand will hold 6 cards max for now. Each card is 8x6 for now
         public Participant(int x, int y)
         {
-            this.handPos = (x, y);
+            this.handPos = (x, y, x+48, y+6);// should create hand space
             this.hand = new List<Card>();
         }
         public void checkHand()
@@ -340,36 +351,28 @@ namespace BlackjackGame
 
     public static class Animations // Pre-configured animations
     {
-        public static void StartHand(TerminalDisplay gameDisplay, List<Card> playerHand, List<Card> dealerHand)
+        static int delay = 10;
+        public static void StartHand(TerminalDisplay gameDisplay, Participant player, Participant dealer)
         {
             // For now this will be on layer 1 I guess
             gameDisplay.Clear(1);
             gameDisplay.Clear(2);
             (int x, int y) deckPos = (gameDisplay.size_x - 15, 15); // This is where the deck is
 
-            int center_x = gameDisplay.size_x / 2;
-            int delay = 20;
             // Player card
-            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(playerHand[0]), deckPos.x, deckPos.y, gameDisplay.size_x / 2,  gameDisplay.size_y - 6, 1, delay, 1);
-            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.CardFaceDown, deckPos.x, deckPos.y, gameDisplay.size_x / 2, 10, 1, delay, 2);
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(player.hand[0]), deckPos.x, deckPos.y,  player.handPos.x2 / 2,  player.handPos.y, 1, delay, 1);
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.CardFaceDown, deckPos.x, deckPos.y, dealer.handPos.x2 / 2,  dealer.handPos.y, 1, delay, 2);
             int j = gameDisplay.size_x;
             gameDisplay.MergeLayer(2, 1); // Merge layer 2 to layer 1
-            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(playerHand[1]), deckPos.x, deckPos.y, gameDisplay.size_x / 2 + 10,  gameDisplay.size_y - 6, 1, delay, 2);
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(player.hand[1]), deckPos.x, deckPos.y,  player.handPos.x2/ 2+8,  player.handPos.y, 1, delay, 2);
             gameDisplay.MergeLayer(2, 1); // Merge layer 2 to layer 1
-            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(dealerHand[1]), deckPos.x, deckPos.y, gameDisplay.size_x / 2 + 10, 10 , 1, delay, 2);
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(dealer.hand[1]), deckPos.x, deckPos.y,  dealer.handPos.x2/ 2+8,  dealer.handPos.y, 1, delay, 2);
             gameDisplay.MergeLayer(2, 1); // Merge layer 2 to layer 1
         }
-        public static void AddCard(TerminalDisplay gameDisplay, List<Card> hand)
+        public static void AddCard(TerminalDisplay gameDisplay, Participant participant)
         {
-            int center_x = gameDisplay.size_x / 2;
-            int j = gameDisplay.size_x;
-            for (int i = 0; i < center_x / 2 - (5 * (hand.Count - 1)); i++)
-            {
-                gameDisplay.Clear(2);
-                gameDisplay.Update(j -= 2, gameDisplay.size_y - 10, AsciiArt.Card(hand.Last()), 2);
-                gameDisplay.Draw();
-                Thread.Sleep(30); // Sleep .5 seconds
-            }
+            (int x, int y) deckPos = (gameDisplay.size_x - 15, 15);
+            TerminalMovement.BasicAnimation(gameDisplay, AsciiArt.Card(participant.hand.Last()), deckPos.x, deckPos.y, participant.handPos.x2 / 2 + (8 * (participant.hand.Count - 1)),  participant.handPos.y, 1, delay, 2); // Should set the position correctly
             gameDisplay.MergeLayer(2, 1); // Merge layer 2 to layer 1
         }
 
@@ -441,8 +444,53 @@ namespace BlackjackGame
                 }
             }
             return array;
-        
-    }
+
+        }
+        public static char[,] TrimArray(char[,] array, int buffer = 1) // Trim whitespace from array
+
+        {
+            ((int x, int y) start, (int x, int y) end) trimmed = ((array.GetLength(0), array.GetLength(1)), (0, 0));
+            bool newRow;
+            char[,] trimmedArray;
+
+            for (int i = 0; i < array.GetLength(1); i++)
+            {
+                newRow = true;
+                for (int j = 0; j < array.GetLength(0); j++)
+                {
+                    if (array[j, i] != ' ' && array[j, i] != '\0') // Blank
+                    {
+                        if (newRow) // Checking for whitespace on the left
+                        {
+                            trimmed.start.x = trimmed.start.x >= j ? j - buffer : trimmed.start.x;
+                            trimmed.start.y = trimmed.start.y >= i ? i - buffer : trimmed.start.y;
+                            newRow = false;
+                        }
+                        else // Checking whitespace on the right
+                        {
+                            trimmed.end.x = trimmed.end.x <= j ? +j + buffer : trimmed.end.x;
+                            trimmed.end.y = trimmed.end.y <= i ? +i + buffer : trimmed.end.y;
+                        }
+                    }
+                }
+            }
+            // Reset trimming back to 0 if it is in the negatives
+            trimmed.start.x = trimmed.start.x < 0 ? 0 : trimmed.start.x;
+            trimmed.start.y = trimmed.start.y < 0 ? 0 : trimmed.start.y;
+
+            trimmedArray = new char[trimmed.end.x - trimmed.start.x, trimmed.end.y - trimmed.start.y];
+
+            for (int i = trimmed.start.y; i < trimmed.end.y; i++)
+            {
+                for (int j = trimmed.start.x; j < trimmed.end.x; j++)
+                {
+                    {
+                        trimmedArray[j - trimmed.start.x, i - trimmed.start.y] = array[j, i]; // In thoery this will add the number
+                    }
+                }
+            }
+            return trimmedArray;
+        }
         public static readonly char[,] PlayButtonPressed = StringToArray(@"
  .--------------------------------------------------------. 
 |█.------------------------------------------------------.█|
@@ -515,7 +563,7 @@ namespace BlackjackGame
 |_______/ |__/ \_______/ \_______/|__/  \__/ \______/  \_______/ \_______/|__/  \__/");
 
         // Cards (Maybe group these so you can do card.facedown, card.spade, etc.)
-         public static readonly char[,] LoseText = StringToArray(@"
+        public static readonly char[,] LoseText = StringToArray(@"
 $$\     $$\  $$$$$$\  $$\   $$\       $$\       $$$$$$\   $$$$$$\  $$$$$$$$\ 
 \$$\   $$  |$$  __$$\ $$ |  $$ |      $$ |     $$  __$$\ $$  __$$\ $$  _____|
  \$$\ $$  / $$ /  $$ |$$ |  $$ |      $$ |     $$ /  $$ |$$ /  \__|$$ |      
@@ -524,7 +572,7 @@ $$\     $$\  $$$$$$\  $$\   $$\       $$\       $$$$$$\   $$$$$$\  $$$$$$$$\
     $$ |    $$ |  $$ |$$ |  $$ |      $$ |     $$ |  $$ |$$\   $$ |$$ |      
     $$ |     $$$$$$  |\$$$$$$  |      $$$$$$$$\ $$$$$$  |\$$$$$$  |$$$$$$$$\ 
     \__|     \______/  \______/       \________|\______/  \______/ \________|");
-         public static readonly char[,] WinTextNE = StringToArray(@"
+        public static readonly char[,] WinTextNE = StringToArray(@"
  /$$     /$$ /$$$$$$  /$$   /$$       /$$      /$$ /$$$$$$ /$$   /$$
 |  $$   /$$//$$__  $$| $$  | $$      | $$  /$ | $$|_  $$_/| $$$ | $$
  \  $$ /$$/| $$  \ $$| $$  | $$      | $$ /$$$| $$  | $$  | $$$$| $$
@@ -533,7 +581,7 @@ $$\     $$\  $$$$$$\  $$\   $$\       $$\       $$$$$$\   $$$$$$\  $$$$$$$$\
     | $$   | $$  | $$| $$  | $$      | $$$/ \  $$$  | $$  | $$\  $$$
     | $$   |  $$$$$$/|  $$$$$$/      | $$/   \  $$ /$$$$$$| $$ \  $$
     |__/    \______/  \______/       |__/     \__/|______/|__/  \__/");
-         public static readonly char[,] WinTextNW = StringToArray(@"
+        public static readonly char[,] WinTextNW = StringToArray(@"
 $$\     $$\  $$$$$$\  $$\   $$\       $$\      $$\ $$$$$$\ $$\   $$\ 
 \$$\   $$  |$$  __$$\ $$ |  $$ |      $$ | $\  $$ |\_$$  _|$$$\  $$ |
  \$$\ $$  / $$ /  $$ |$$ |  $$ |      $$ |$$$\ $$ |  $$ |  $$$$\ $$ |
@@ -542,7 +590,7 @@ $$\     $$\  $$$$$$\  $$\   $$\       $$\      $$\ $$$$$$\ $$\   $$\
     $$ |    $$ |  $$ |$$ |  $$ |      $$$  / \$$$ |  $$ |  $$ |\$$$ |
     $$ |     $$$$$$  |\$$$$$$  |      $$  /   \$$ |$$$$$$\ $$ | \$$ |
     \__|     \______/  \______/       \__/     \__|\______|\__|  \__|");
-         public static readonly char[,] WinTextSE = StringToArray(@"
+        public static readonly char[,] WinTextSE = StringToArray(@"
 |  \    /  \ /      \ |  \  |  \      |  \  _  |  \|      \|  \  |  \
  \$$\  /  $$|  $$$$$$\| $$  | $$      | $$ / \ | $$ \$$$$$$| $$\ | $$
   \$$\/  $$ | $$  | $$| $$  | $$      | $$/  $\| $$  | $$  | $$$\| $$
@@ -551,7 +599,7 @@ $$\     $$\  $$$$$$\  $$\   $$\       $$\      $$\ $$$$$$\ $$\   $$\
     | $$    | $$__/ $$| $$__/ $$      | $$$$  \$$$$ _| $$_ | $$ \$$$$
     | $$     \$$    $$ \$$    $$      | $$$    \$$$|   $$ \| $$  \$$$
      \$$      \$$$$$$   \$$$$$$        \$$      \$$ \$$$$$$ \$$   \$$");
-         public static readonly char[,] WinTextSW = StringToArray(@"
+        public static readonly char[,] WinTextSW = StringToArray(@"
 /  \    /  |/      \ /  |  /  |      /  |  _  /  |/      |/  \  /  |
 $$  \  /$$//$$$$$$  |$$ |  $$ |      $$ | / \ $$ |$$$$$$/ $$  \ $$ |
  $$  \/$$/ $$ |  $$ |$$ |  $$ |      $$ |/$  \$$ |  $$ |  $$$  \$$ |
@@ -560,7 +608,7 @@ $$  \  /$$//$$$$$$  |$$ |  $$ |      $$ | / \ $$ |$$$$$$/ $$  \ $$ |
     $$ |   $$ \__$$ |$$ \__$$ |      $$$$/  $$$$ | _$$ |_ $$ |$$$$ |
     $$ |   $$    $$/ $$    $$/       $$$/    $$$ |/ $$   |$$ | $$$ |
     $$/     $$$$$$/   $$$$$$/        $$/      $$/ $$$$$$/ $$/   $$/ ");
-         public static readonly char[,] DrawText = StringToArray(@"
+        public static readonly char[,] DrawText = StringToArray(@"
 $$$$$$$\  $$$$$$$\   $$$$$$\  $$\      $$\ 
 $$  __$$\ $$  __$$\ $$  __$$\ $$ | $\  $$ |
 $$ |  $$ |$$ |  $$ |$$ /  $$ |$$ |$$$\ $$ |
@@ -630,6 +678,161 @@ $$$$$$$  |$$ |  $$ |$$ |  $$ |$$  /   \$$ |
 | {suit}--{(rank.Length == 1 ? rank + " " : rank)}|
 '------'");
         }
+        public static char[,] Number(int number, int digitsToDisplay = 0) // TODO this is a pretty awful solution
+        {
+            int x_start = 0; // This is where we should start the next number
+            char[] numbers = number.ToString().ToCharArray(); // set of numbers
+            char[,] result = new char[digitsToDisplay == 0 ? numbers.GetLength(0) * 10 : digitsToDisplay * 10, 9]; // Either create 10 slots for each character, or limit it to digits to display
+
+            void AddNumberToArray(char[,] charNumber)
+            {
+                //Console.WriteLine($"X: {charNumber.GetLength(0)}, Y: {charNumber.GetLength(1)}");
+                //Console.WriteLine($"Starting Position: {x_start}.");
+                for (int i = 0; i < charNumber.GetLength(1); i++)
+                {
+                    for (int j = x_start; j < charNumber.GetLength(0) + x_start; j++)
+                    {
+                        {
+                            result[j, i] = charNumber[j - x_start, i]; // In thoery this will add the number
+                        }
+                    }
+                }
+                x_start += charNumber.GetLength(0); // Set the new starting position
+            }
+
+            for (int i = 0; i < numbers.GetLength(0); i++) // Could use foreach, but this is a bit cleaner
+            {
+                if (digitsToDisplay != 0 && i > digitsToDisplay) // Break if we're limiting characters
+                {
+                    break;
+                }
+                switch (numbers[i])
+                {
+                    case '0':
+                        AddNumberToArray(zero);
+                        break;
+                    case '1':
+                        AddNumberToArray(one);
+                        break;
+                    case '2':
+                        AddNumberToArray(two);
+                        break;
+                    case '3':
+                        AddNumberToArray(three);
+                        break;
+                    case '4':
+                        AddNumberToArray(four);
+                        break;
+                    case '5':
+                        AddNumberToArray(five);
+                        break;
+                    case '6':
+                        AddNumberToArray(six);
+                        break;
+                    case '7':
+                        AddNumberToArray(seven);
+                        break;
+                    case '8':
+                        AddNumberToArray(eight);
+                        break;
+                    case '9':
+                        AddNumberToArray(nine);
+                        break;
+                }
+            }
+            //return result;
+            return TrimArray(result);
+        }
+            static readonly char[,] zero = StringToArray(@"
+  ___  
+ / _ \ 
+| | | |
+| | | |
+| |_| |
+ \___/ 
+        
+");
+            static readonly char[,] one = StringToArray(@"
+ __ 
+/_ |
+ | |
+ | |
+ | |
+ |_|
+    
+");
+            static readonly char[,] two = StringToArray(@"
+ ___  
+|__ \ 
+   ) |
+  / / 
+ / /_ 
+|____|
+      
+");
+            static readonly char[,] three = StringToArray(@"
+ ____  
+|___ \ 
+  __) |
+ |__ < 
+ ___) |
+|____/ 
+       
+");
+            static readonly char[,] four = StringToArray(@"
+ _  _   
+| || |  
+| || |_ 
+|__   _|
+   | |  
+   |_|  
+        
+");
+            static readonly char[,] five = StringToArray(@"
+ _____ 
+| ____|
+| |__  
+|___ \ 
+ ___) |
+|____/ 
+       
+");
+            static readonly char[,] six = StringToArray(@"
+   __  
+  / /  
+ / /_  
+| '_ \ 
+| (_) |
+ \___/ 
+       
+");
+            static readonly char[,] seven = StringToArray(@"
+ ______ 
+|____  |
+    / / 
+   / /  
+  / /   
+ /_/    
+        
+");
+            static readonly char[,] eight = StringToArray(@"
+  ___  
+ / _ \ 
+| (_) |
+ > _ < 
+| (_) |
+ \___/ 
+       
+");
+            static readonly char[,] nine = StringToArray(@"
+  ___  
+ / _ \ 
+| (_) |
+ \__, |
+   / / 
+  /_/  
+       
+");
     }
 }
 
