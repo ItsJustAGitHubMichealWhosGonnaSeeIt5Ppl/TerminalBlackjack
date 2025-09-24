@@ -168,7 +168,7 @@ public class TerminalDisplay //
             }
         }
         return pixelArray;
-        
+
     }
     public Pixel[,] Rainbow(Direction direction, int step, Pixel[,] array)
     {
@@ -180,47 +180,37 @@ public class TerminalDisplay //
     {
         //TODO implement me!
     }
-
-
+    // Draw the display.  Works from the top layer down until it finds a character to draw.  Does not redraw the same characters. Very fast
     public void Draw(int layer = -1) // TODO allow a specific layer to be "drawn" instead of doing all of them
     {
-        Pixel[,] frameChars = new Pixel[Size.x, Size.y]; // This is the base frame.  Each layer will be overlayed onto this.
-
-        for (int l = 0; l < total_layers; l++) // iterate through the layers
+        for (int i = 0; i < size_y; i++)
         {
-            for (int i = 0; i < size_y; i++)
+            for (int j = 0; j < size_x; j++)
             {
-                for (int j = 0; j < size_x; j++)
+                for (int l = total_layers - 1; l >= 0; l--) // iterate through the layers        
                 {
-                    if (previousFrame[j, i] == display[j, i, l]) // Don't redraw the same thing
+                    if (l == 0 || !(display[j, i, l].character == ' ' || display[j, i, l].character == '\0') || display[j, i, l].force) // Will ignore whitespace unless its the first (or only) layer.
                     {
-                        continue;
-                    }
 
-                    else if (l == 0 || !(display[j, i, l].character == ' ' || display[j, i, l].character == '\0') || display[j, i, l].force) // Will ignore whitespace unless its the first (or only) layer.
-                    {
+                        if (previousFrame[j, i] != null && previousFrame[j, i].character == display[j, i, l].character && previousFrame[j, i].background == display[j, i, l].background && previousFrame[j, i].color == display[j, i, l].color && previousFrame[j, i].force == display[j, i, l].force) // Don't redraw the same thing
+                        {
+                            break;
+                        }
+                        // Normal
                         Console.SetCursorPosition(j, i); // This sets the cursor to the top left which means its not printing new ones each time (I like that more)
                         Console.BackgroundColor = display[j, i, l].background;
+                        // DEBUG!
+                        // Normal
                         Console.ForegroundColor = display[j, i, l].color;
                         Console.Write(display[j, i, l].character);
                         previousFrame[j, i] = display[j, i, l];
+                        break; // Working top down, so as soon as we find something we draw
+
                     }
                 }
             }
         }
-        if (false)
-        {
-            for (int i = 0; i < size_y; i++)
-            {
-                for (int j = 0; j < size_x; j++)
-                {
-                    Console.BackgroundColor = frameChars[j, i].background;
-                    Console.ForegroundColor = frameChars[j, i].color;
-                    Console.Write(frameChars[j, i].character);
-                }
-                Console.Write('\n'); // Newline for Y axis
-            }
-        }
+        Console.SetCursorPosition(0, 0);
     }
 
 }
