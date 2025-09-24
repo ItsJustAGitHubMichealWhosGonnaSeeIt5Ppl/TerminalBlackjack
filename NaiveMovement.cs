@@ -21,7 +21,7 @@ public static class TerminalMovement
     /// <param name="movement_amount">How many pixels to move by in each frame</param>
     /// <param name="speed">milliseconds to delay between frames (defaults to 50)</param>
     /// <param name="layer"></param>
-    public static void BasicAnimation(TerminalDisplay display, char[,] sprite, int start_x, int start_y, int end_x, int end_y, int move_amount=1, int speed = 50, int layer = 0)
+    public static void BasicAnimation(TerminalDisplay display, char[,] sprite, int start_x, int start_y, int end_x, int end_y, int magnitude=1, int speed = 50, int layer = 0)
     {
         var vectors = UnitVector(start_x, start_y, end_x, end_y);
         //var linearRegression = LinearRegression(start_x, start_y, end_x, end_y);
@@ -32,16 +32,20 @@ public static class TerminalMovement
 
         while (Convert.ToInt16(xd) != end_x) // Jank ass solution, lets see what happens
         {
+            if ((start_x > end_x && xd <= end_x) || (start_x < end_x && xd >= end_x)) // Prevent things from flying away forever
+            {
+                break;
+            }
             display.Clear(layer);
-            display.Update(Convert.ToInt16(xd), Convert.ToInt16(yd), sprite, layer);
+            display.Update(Convert.ToInt16(xd), Convert.ToInt16(yd), sprite, layer, Anchor.TopCenter); // The new default will be top center so best to get used to it now
             display.Draw();
             Thread.Sleep(speed);
-            xd += vectors.x*move_amount;
-            yd += vectors.y*move_amount;
+            xd += vectors.x*magnitude;
+            yd += vectors.y*magnitude;
 
         }
         display.Clear(layer);
-        display.Update(end_x, end_y, sprite, layer);
+        display.Update(end_x, end_y, sprite, layer, Anchor.TopCenter);
         display.Draw();
 
     }

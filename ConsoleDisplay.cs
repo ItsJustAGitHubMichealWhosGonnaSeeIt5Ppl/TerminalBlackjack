@@ -3,38 +3,34 @@
 
 /* Terminal Display handler
 TODOs below
+- TODO Allow a set framerate to be specified and factor in the time it takes to draw each frame
 - DONE allow merging layers
 - DONE allow partially clearing an area
-- TODO allow centering somehow
-- TODO Allow a set framerate to be specified and factor in the time it takes to draw each frame
+- DONE allow centering somehow
 */
 
 public class TerminalDisplay //
 {
-    public int size_x { get; }
+    public int size_x { get; } //TODO deprecate
     public int size_y { get; }
+    public Coordinate Size { get; } = new Coordinate();
+    public Coordinate Center { get; } = new Coordinate();
+
     int total_layers;
     char[,,] display;
-    public enum Anchor {
-        top_left,
-        top_center,
-        top_right,
-        left,
-        center,
-        right,
-        bottom_left,
-        bottom_center,
-        bottom_right,
-    };
     /// <summary>
     /// Create a display. By default, the display will only have a single layer. Layers will be drawn lowest to highest
     /// </summary>
     public TerminalDisplay(int x, int y, int layers = 1)
     {
-        this.size_x = x;
-        this.size_y = y;
+        this.Size.x = x > 0 ? x : 100;
+        this.size_x = Size.x;
+        this.Size.y = y> 0 ? y: 100;
+        this.size_y = Size.y;
+        this.Center.x = Size.x / 2;
+        this.Center.y = Size.y / 2;
         this.total_layers = layers;
-        this.display = new char[x, y, layers];
+        this.display = new char[Size.x , Size.y , layers]; // The 100 will allow it to run when debugging
         Console.Clear(); // Clear the terminal
         Clear();
     }
@@ -56,45 +52,42 @@ public class TerminalDisplay //
                 }
                 catch (IndexOutOfRangeException e) // Avoid out of range
                 {
-                    Console.Write(e);
-                    Console.ReadKey(true);
                 }
             }
         }
     }
 
-
-    public void Update(int x, int y, char[,] arrayToDisplay, int layer = 0, Anchor anchor=Anchor.top_left) // try to draw image onto display. Whitespace WILL be included
+    public void Update(int x, int y, char[,] arrayToDisplay, int layer = 0, Anchor anchor = Anchor.TopLeft) // try to draw image onto display. Whitespace WILL be included
     {
         switch (anchor)
         {
-            case Anchor.top_left: // change nothing
+            case Anchor.TopLeft: // change nothing
                 break;
-            case Anchor.top_center: // offset X
-                x -= (arrayToDisplay.GetLength(0)-1) / 2;
+            case Anchor.TopCenter: // offset X
+                x -= (arrayToDisplay.GetLength(0) - 1) / 2;
                 break;
-            case Anchor.top_right:
+            case Anchor.TopRight:
                 x = arrayToDisplay.GetLength(0) - 1;
                 break;
-            case Anchor.left:
+            case Anchor.Left:
                 y -= (arrayToDisplay.GetLength(1) - 1) / 2;
                 break;
-            case Anchor.center:
-                x -= (arrayToDisplay.GetLength(0)-1) / 2;
+            case Anchor.Center:
+                x -= (arrayToDisplay.GetLength(0) - 1) / 2;
                 y -= (arrayToDisplay.GetLength(1) - 1) / 2;
                 break;
-            case Anchor.right:
+            case Anchor.Right:
                 x = arrayToDisplay.GetLength(0) - 1;
                 y -= (arrayToDisplay.GetLength(1) - 1) / 2;
                 break;
-            case Anchor.bottom_left:
+            case Anchor.BottomLeft:
                 y = arrayToDisplay.GetLength(1) - 1;
                 break;
-            case Anchor.bottom_center:
-                x -= (arrayToDisplay.GetLength(0)-1) / 2;
+            case Anchor.BottomCenter:
+                x -= (arrayToDisplay.GetLength(0) - 1) / 2;
                 y = arrayToDisplay.GetLength(1) - 1;
                 break;
-            case Anchor.bottom_right:
+            case Anchor.BottomRight:
                 x = arrayToDisplay.GetLength(0) - 1;
                 y = arrayToDisplay.GetLength(1) - 1;
                 break;
@@ -116,7 +109,7 @@ public class TerminalDisplay //
             }
         }
     }
-    public void MergeLayer(int mergeFrom, int mergeTo) // Merge layers
+    public void MergeLayer(int mergeFrom, int mergeTo) // Merge layers and clear the one it merged from
     {
         for (int i = 0; i < size_y; i++)
         {
@@ -128,23 +121,29 @@ public class TerminalDisplay //
                 }
             }
         }
+        Clear(mergeFrom);
     }
-    public char[,] CopySection(int x1, int y1, int x2, int y2, int layer = 0) // Move a section of the display around
+    public char[,] CopySection(int x1, int y1, int x2, int y2, int layer = 0, bool clear=false) // Move a section of the display around
     {
         char[,] selectedChars = new char[x2 - x1, y2 - y1]; // This will store the selected section
 
         // Grab the section
-        for (int i = y1; i <= y2; i++)
+        for (int i = y1; i < y2; i++)
         {
-            for (int j = x1; j <= x2; j++)
+            for (int j = x1; j < x2; j++)
             {
                 {
                     selectedChars[j - x1, i - y1] = display[j, i, layer];
                 }
             }
         }
+        if (clear)
+        {
+            FillSection(' ', x1, y1, x2, y2, layer);
+        }
         return selectedChars;
     }
+
     public void MoveLayer(int layer, int x, int y) // Move an entire layer around
     {
         //TODO implement me!
