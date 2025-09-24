@@ -13,7 +13,7 @@ Someone wins
 
 OTHER
 - Use this font https://strlen.com/square/
-
+- TODO can we allow use of mouse?
 */
 
 namespace BlackjackGame
@@ -30,10 +30,11 @@ namespace BlackjackGame
             var test2 = AsciiArt.Number(21);
 
             bool test = false;
-            bool noInput = true; // For testing when input isn't allowed
-            if (test)
+            bool noInput = false; // For testing when input isn't allowed
+            if (test) // TEST CODE
             {
-                // TEST
+
+
                 (double x, double y) velocity2 = TerminalMovement.UnitVector(89); // set the start angle here
                 var coordlist = TerminalMovement.Reflect(1, 1, display.size_x - 4, display.size_y - 4, velocity2.x, velocity2.y, 20); // Remove 4 from the border so the ball stays on screen
                 char[,] x_char = new char[,] { { 'O', 'O' }, { 'O', 'O' } };
@@ -73,11 +74,11 @@ namespace BlackjackGame
                 }
 
                 Console.ReadKey(true);
-                // END TEST
-            }
+                
+            } // END TEST
 
             display.Clear();
-            display.Update(display.size_x / 2, 3, AsciiArt.BlackJackLogo, 0, Anchor.TopCenter); // Draw this as the background in the center ish
+            display.Update(display.size_x / 2, 3, display.ConvertToPixelArray(AsciiArt.BlackJackLogo, ConsoleColor.Red), 0, Anchor.TopCenter); // Draw this as the background in the center ish
             display.Update(display.size_x / 2, 13, AsciiArt.PlayButton, 1, Anchor.TopCenter);
             display.Update(display.size_x / 2, 13, AsciiArt.PlayButtonSelected, 2, Anchor.TopCenter); // Set layer 2 play button to selected
             display.Update(display.size_x / 2, 25, AsciiArt.QuitButton, 1, Anchor.TopCenter);
@@ -223,7 +224,7 @@ namespace BlackjackGame
                         }
                         else if (!stand) // nobody has one, keep moving
                         {
-                            switch (Console.ReadKey(true).Key)
+                            switch (Console.ReadKey(false).Key)
                             {
                                 case ConsoleKey.H: // Hit
                                     player.addCard(myDeck.deck[cardCount--]);
@@ -409,21 +410,21 @@ namespace BlackjackGame
                 switch (i++)
                 {
                     case 0:
-                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, AsciiArt.WinTextNE, 2);
+                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, display.ConvertToPixelArray(AsciiArt.WinTextNE), 2);
                         break;
                     case 1:
-                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, AsciiArt.WinTextSE, 2);
+                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, display.ConvertToPixelArray(AsciiArt.WinTextSE, ConsoleColor.Red), 2);
                         break;
                     case 2:
-                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, AsciiArt.WinTextSW, 2);
+                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, display.ConvertToPixelArray(AsciiArt.WinTextSW, ConsoleColor.White), 2);
                         break;
                     case 3:
-                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, AsciiArt.WinTextNW, 2);
+                        display.Update((display.size_x / 2) - (AsciiArt.WinTextNE.GetLength(0) / 2), display.size_y / 2, display.ConvertToPixelArray(AsciiArt.WinTextNW, ConsoleColor.Blue), 2);
                         i = 0;
                         break;
                 }
                 display.Draw();
-                Thread.Sleep(100); // Sleep .06 seconds  
+                Thread.Sleep(250); // Sleep .06 seconds  
             }
         }
     }
@@ -469,7 +470,6 @@ namespace BlackjackGame
 
         }
         public static char[,] TrimArray(char[,] array, int buffer = 1) // Trim whitespace from array
-
         {
             ((int x, int y) start, (int x, int y) end) trimmed = ((array.GetLength(0), array.GetLength(1)), (0, 0));
             bool newRow;

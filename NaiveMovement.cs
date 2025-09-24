@@ -88,7 +88,7 @@ public static class TerminalMovement
 
         return (cos, sin);
     }
-    public static (double x, double y) UnitVector(int x_start, int y_start, int x_stop, int y_stop) // Getting the position using start and end coords // TODO MAKE THIS WORK
+    public static (double x, double y) UnitVector(int x_start, int y_start, int x_stop, int y_stop) // Getting the position using start and end coords
     {
         int x_rel = x_stop - x_start; // The amount of movment where start is 0
         int y_rel = y_stop - y_start; // The amount of movment where start is 0

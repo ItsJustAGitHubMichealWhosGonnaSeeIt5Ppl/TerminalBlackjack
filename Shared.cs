@@ -9,6 +9,12 @@ public enum Anchor { // TODO Create an X anchor and Y anchor
     BottomCenter,
     BottomRight,
 };
+public enum Direction {
+    PosX,
+    PosY,
+    NegX,
+    NegY,
+}
 
 public class Coordinate
 {
